@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monotone Cube</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.8.1/gl-matrix-min.js"></script>
+  <script src="/cubepedestal.js"></script>
+  <script src="./src/sylvester.js"></script>
+  <script src="./src/glUtils.js"></script>
+  <script src="./src/sceneNode.js"></script>
+</head>
+<body onload="start()">
+  <canvas id="glcanvas" width="640" height="480">
+    Your browser doesn't appear to support the HTML5
+    <code>&lt;canvas&gt;</code> element.
+  </canvas>
+  <script id="shader-fs" type="x-shader/x-fragment">
+    precision mediump float;
+    uniform vec4 uColor;
+
+    void main(void) {
+        gl_FragColor = uColor;
+    }
+
+  </script>
+  <script id="shader-vs" type="x-shader/x-vertex">
+    attribute vec3 aVertexPosition;
+
+    uniform mat4 uMVMatrix;
+    uniform mat4 uPMatrix;
+
+    void main(void) {
+      gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+    }
+  </script>
+</body>
+</html>
