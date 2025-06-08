@@ -5,11 +5,11 @@ var pMatrix = mat4.create();   // Матрица перспективы
 var mvMatrixStack = []; // Стек для хранения матриц// Текущая матрица модели-вида
 
 function setMatrixUniforms() {
-  var pUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
-  var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+  gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, perspectiveMatrix);
+  gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
 
-  gl.uniformMatrix4fv(pUniform, false, perspectiveMatrix);
-  gl.uniformMatrix4fv(mvUniform, false, mvMatrix);
+  // Позиция источника света (в мировых координатах)
+  gl.uniform3fv(shaderProgram.lightPositionUniform, [0.0, 5.0, -3.0]);
 }
 
 function makePerspective(fov, aspect, near, far) {
@@ -113,11 +113,17 @@ function initShaders() {
   shaderProgram.uColor = gl.getUniformLocation(shaderProgram, "uColor"); //  поддержка uColor в initShaders
 
 
-  vertexPositionAttribute = gl.getAttribLocation(
-    shaderProgram,
-    "aVertexPosition",
-  );
-  gl.enableVertexAttribArray(vertexPositionAttribute);
+  shaderProgram.vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
+  gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
+
+  shaderProgram.vertexNormalAttribute = gl.getAttribLocation(shaderProgram, "aVertexNormal");
+  gl.enableVertexAttribArray(shaderProgram.vertexNormalAttribute);
+
+  shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
+  shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+  shaderProgram.colorUniform = gl.getUniformLocation(shaderProgram, "uColor");
+  shaderProgram.lightPositionUniform = gl.getUniformLocation(shaderProgram, "uLightPosition");
+
 }
 
 // Функция получает из DOM шейдерную программу
@@ -237,6 +243,27 @@ gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
     new Uint16Array(cubeVertexIndices),
     gl.STATIC_DRAW,
   );
+
+  var cubeVertexNormals = [
+    // Передняя грань
+    0.0,  0.0,  1.0,  0.0,  0.0,  1.0,  0.0,  0.0,  1.0,  0.0,  0.0,  1.0,
+    // Задняя грань
+    0.0,  0.0, -1.0,  0.0,  0.0, -1.0,  0.0,  0.0, -1.0,  0.0,  0.0, -1.0,
+    // Верхняя грань
+    0.0,  1.0,  0.0,  0.0,  1.0,  0.0,  0.0,  1.0,  0.0,  0.0,  1.0,  0.0,
+    // Нижняя грань
+    0.0, -1.0,  0.0,  0.0, -1.0,  0.0,  0.0, -1.0,  0.0,  0.0, -1.0,  0.0,
+    // Правая грань
+    1.0,  0.0,  0.0,  1.0,  0.0,  0.0,  1.0,  0.0,  0.0,  1.0,  0.0,  0.0,
+    // Левая грань
+    -1.0,  0.0,  0.0, -1.0,  0.0,  0.0, -1.0,  0.0,  0.0, -1.0,  0.0,  0.0,
+  ];
+
+  cubeVerticesNormalBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, cubeVerticesNormalBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(cubeVertexNormals), gl.STATIC_DRAW);
+
+
 }
 const positions = [
   [0.0, -1.0, 0.0],  // Основание
@@ -373,9 +400,12 @@ function setColor(color) {
 }
 
 function drawCube() {
-  
-    gl.bindBuffer(gl.ARRAY_BUFFER, cubeVerticesBuffer);
-    gl.vertexAttribPointer(vertexPositionAttribute, 3, gl.FLOAT, false, 0, 0);
-    setMatrixUniforms();
-    gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
+  gl.bindBuffer(gl.ARRAY_BUFFER, cubeVerticesBuffer);
+  gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, 3, gl.FLOAT, false, 0, 0);
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, cubeVerticesNormalBuffer);
+  gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, 3, gl.FLOAT, false, 0, 0);
+
+  setMatrixUniforms();
+  gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
 }
